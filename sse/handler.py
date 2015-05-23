@@ -24,15 +24,14 @@ class Handler:
         if self.request.method.upper() != 'GET':
             raise exceptions.MethodNotAllowed()
 
-        for header, value in self.request.headers.items():
-            if header.upper() == 'ACCEPT':
-                options = value.split(';')
-                for option in options:
-                    accept = option.strip()
-                    if accept in ['*', '*/*']:
-                        return True
-                    elif accept == 'text/event-stream':
-                        return True
+        value = self.request.headers['ACCEPT']
+        options = value.split(';')
+        for option in options:
+            accept = option.strip()
+            if accept in ['*', '*/*']:
+                return True
+            elif accept == 'text/event-stream':
+                return True
         raise exceptions.NotAcceptable()
 
     @asyncio.coroutine
