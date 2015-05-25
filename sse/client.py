@@ -52,12 +52,18 @@ class SSEClient(object):
 
     @asyncio.coroutine
     def _do_receive_loop(self):
-        while True:
-            msg = yield from self.receive()
-            if asyncio.is_coroutine_function(self.on_message):
-                yield from self.on_message(msg)
-            else:
-                self.on_message(msg)
+        while self._connected:
+            try:
+                msg = yield from self.receive()
+                if asyncio.iscoroutinefunction(self.on_message):
+                    yield from self.on_message(msg)
+                else:
+                    self.on_message(msg)
+            except aiohttp.errors.ServerDisconnectedError:
+                if not self._connected:
+                    pass
+                else:
+                    raise
 
     @asyncio.coroutine
     def receive(self):
@@ -98,10 +104,10 @@ class SSEClient(object):
 
         return msg
 
-    @asyncio.coroutine
     def close(self):
         if self._connected:
             self._resp.close()
+            self._connected = False
 
     # Python 3.5-only.
     @asyncio.coroutine
@@ -113,10 +119,20 @@ class SSEClient(object):
     def __aexit__(self, *args):
         self.close()
 
+    @asyncio.coroutine
+    def __aiter__(self):
+        return self
+
+    @asyncio.coroutine
+    def __anext__(self):
+        data = yield from self.receive()
+        if data:
+            return data
+        else:
+            raise StopAsyncIteration
 
 
 class Event(object):
-
     sse_line_pattern = re.compile('(?P<name>[^:]*):?( ?(?P<value>.*))?')
     DEFAULT_MSG = "message" # The SSE spec defines this.
 
