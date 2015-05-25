@@ -4,10 +4,10 @@ import asyncio
 import aiohttp
 import warnings
 
-__all__ = ['sseclient_connect', 'SSEClient', 'Event']
+__all__ = ['create_sseclient', 'SSEClient', 'Event']
 
 @asyncio.coroutine
-def sseclient_connect(*args, **kwargs):
+def create_sseclient(*args, **kwargs):
     """ Helper to create a SSEClient instance and then connect it. 
     
     Takes whatever args/kwargs SSEClient takes.
