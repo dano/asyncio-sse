@@ -4,41 +4,35 @@ import asyncio
 import aiohttp
 import warnings
 
-__all__ = ['create_sseclient', 'SSEClient', 'Event']
-
-@asyncio.coroutine
-def create_sseclient(*args, **kwargs):
-    """ Helper to create a SSEClient instance and then connect it. 
-    
-    Takes whatever args/kwargs SSEClient takes.
-    
-    """
-    s = SSEClient(*args, **kwargs)
-    yield from s.connect()
-    return s
+__all__ = ['SSEClient', 'Event']
 
 class SSEClient(object):
-    def __init__(self, url, last_id=None, retry=3000, 
+    @classmethod
+    @asyncio.coroutine
+    def create(cls, url, last_id=None, retry=3000, 
                  encoding='utf-8', on_message=None, **kwargs):
-        self.url = url
-        self.last_id = last_id
-        self.retry = retry
-        self.encoding = encoding
-        self._connected = False
-        self.on_message = on_message
-        self.buf = ''
+        s = cls()
+        s.url = url
+        s.last_id = last_id
+        s.retry = retry
+        s.encoding = encoding
+        s._connected = False
+        s.on_message = on_message
+        s.buf = ''
 
         # Any extra kwargs will be fed into the aiohttp.request call later.
-        self.request_kwargs = kwargs
+        s.request_kwargs = kwargs
 
-        if 'headers' not in self.request_kwargs:
-            self.request_kwargs['headers'] = {}
+        if 'headers' not in s.request_kwargs:
+            s.request_kwargs['headers'] = {}
 
         # The SSE spec requires making requests with Cache-Control: nocache
-        self.request_kwargs['headers']['Cache-Control'] = 'no-cache'
+        s.request_kwargs['headers']['Cache-Control'] = 'no-cache'
 
         # The 'Accept' header is not required, but explicit > implicit
-        self.request_kwargs['headers']['Accept'] = 'text/event-stream'
+        s.request_kwargs['headers']['Accept'] = 'text/event-stream'
+
+        yield from s.connect()
 
     @asyncio.coroutine
     def connect(self):
