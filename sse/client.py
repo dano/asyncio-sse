@@ -1,10 +1,13 @@
 # Based on the sseclient library by btubbs: http://bits.btubbs.com/sseclient
 import re
+import sys
 import asyncio
 import aiohttp
 import warnings
 
 __all__ = ['SSEClient', 'Event']
+
+_PY35 = sys.version_info >= (3, 5)
 
 class SSEClient(object):
     @classmethod
@@ -103,27 +106,27 @@ class SSEClient(object):
             self._resp.close()
             self._connected = False
 
-    # Python 3.5-only.
-    @asyncio.coroutine
-    def __aenter__(self):
-        yield from self.connect()
-        return self
+    if _PY35:
+        @asyncio.coroutine
+        def __aenter__(self):
+            yield from self.connect()
+            return self
 
-    @asyncio.coroutine
-    def __aexit__(self, *args):
-        self.close()
+        @asyncio.coroutine
+        def __aexit__(self, *args):
+            self.close()
 
-    @asyncio.coroutine
-    def __aiter__(self):
-        return self
+        @asyncio.coroutine
+        def __aiter__(self):
+            return self
 
-    @asyncio.coroutine
-    def __anext__(self):
-        data = yield from self.receive()
-        if data:
-            return data
-        else:
-            raise StopAsyncIteration
+        @asyncio.coroutine
+        def __anext__(self):
+            data = yield from self.receive()
+            if data:
+                return data
+            else:
+                raise StopAsyncIteration
 
 
 class Event(object):
