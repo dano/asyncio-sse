@@ -54,3 +54,32 @@ class Handler(sse.Handler):
     def handle_request(self):
         self.send('some data', id=12345, event='something', retry=10000)
 ```
+
+SSE Client:
+```python
+@asyncio.coroutine
+def connect_to_sse_server(server_url):
+    client = yield from SSEClient.create(server_url)
+    while True:
+        event = yield from client.receive()
+        print(event)
+        print(event.event)
+        print(event.data)
+    client.close()
+
+@asyncio.coroutine
+def connect_to_sse_server_cb(server_url):
+    def cb(event):
+        print(event)
+        print(event.event)
+        print(event.data)
+    client = yield from SSEClient.create(server_url, on_message=cb)
+
+async def connect_to_sse_server_py35(server_url):
+    """ This one only works on Python 3.5+ """
+    client = await SSEClient.create(server_url)
+    async for event in client:
+        print(event)
+        print(event.event)
+        print(event.data)
+```
